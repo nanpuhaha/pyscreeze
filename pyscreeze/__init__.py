@@ -479,6 +479,31 @@ def locateOnWindow(image, title, **kwargs):
     return locateOnScreen(image, region=(win.left, win.top, win.width, win.height), **kwargs)
 
 
+def locateOnClient(image, title, **kwargs):
+    """
+    TODO
+    """
+    if _PYGETWINDOW_UNAVAILABLE:
+        raise PyScreezeException(
+            "locateOnClient() failed because PyGetWindow is not installed or is unsupported on this platform."
+        )
+
+    matchingClients = pygetwindow.getClientsWithTitle(title)
+    if len(matchingClients) == 0:
+        raise PyScreezeException("Could not find a window with %s in the title" % (title))
+    elif len(matchingClients) > 1:
+        raise PyScreezeException(
+            "Found multiple windows with %s in the title: %s"
+            % (title, [str(client) for client in matchingClients])
+        )
+
+    client = matchingClients[0]
+    client.activate()
+    return locateOnScreen(
+        image, region=(client.left, client.top, client.width, client.height), **kwargs
+    )
+
+
 @requiresPillow
 def showRegionOnScreen(region, outlineColor="red", filename="_showRegionOnScreen.png"):
     """
