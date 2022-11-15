@@ -39,15 +39,10 @@ class TestPillowNotImported(unittest.TestCase):
 
             with self.assertRaises(pyscreeze.PyScreezeException):
                 pyscreeze.locateAll('foo.png', 'foo.png')
-        else:
-            pass # TODO - add some kind of warning here that we aren't actually testing anything, maybe?
 
 if __name__ == '__main__':
-    # Ensure that our fake PIL module is imported, which simulates PIL not being available for importing.
-    fileObj = open('PIL.py', 'w')
-    fileObj.write("""raise ImportError('fake import error')\n""")
-    fileObj.close()
-
+    with open('PIL.py', 'w') as fileObj:
+        fileObj.write("""raise ImportError('fake import error')\n""")
     import pyscreeze # Import pyscreeze and fool it into thinking PIL is unavailable.
 
     try:

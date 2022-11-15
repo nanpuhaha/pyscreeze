@@ -8,6 +8,7 @@ https://stackoverflow.com/questions/7648200/pip-install-pil-e-tickets-1-no-jpeg-
 http://ubuntuforums.org/showthread.php?t=1751455
 """
 
+
 __version__ = "0.1.28"
 
 import collections
@@ -97,11 +98,7 @@ try:
         )
         scrotExists = whichProc.wait() == 0
 except OSError as ex:
-    if ex.errno == errno.ENOENT:
-        # if there is no "which" program to find scrot, then assume there
-        # is no scrot.
-        pass
-    else:
+    if ex.errno != errno.ENOENT:
         raise
 
 
@@ -334,11 +331,7 @@ def _locateAll_python(
     # set to 1.
     step = 1  # hard-code step as 1 until a way to improve it can be figured out.
 
-    if step == 1:
-        firstFindFunc = _kmp
-    else:
-        firstFindFunc = _steppingFind
-
+    firstFindFunc = _kmp if step == 1 else _steppingFind
     for y in range(haystackHeight):  # start at the leftmost column
         for matchx in firstFindFunc(
             needleImageFirstRow,
@@ -385,14 +378,12 @@ def locate(needleImage, haystackImage, **kwargs):
     """
     # Note: The gymnastics in this function is because we want to make sure to exhaust the iterator so that the needle and haystack files are closed in locateAll.
     kwargs["limit"] = 1
-    points = tuple(locateAll(needleImage, haystackImage, **kwargs))
-    if len(points) > 0:
+    if points := tuple(locateAll(needleImage, haystackImage, **kwargs)):
         return points[0]
+    if USE_IMAGE_NOT_FOUND_EXCEPTION:
+        raise ImageNotFoundException("Could not locate the image.")
     else:
-        if USE_IMAGE_NOT_FOUND_EXCEPTION:
-            raise ImageNotFoundException("Could not locate the image.")
-        else:
-            return None
+        return None
 
 
 def locateOnScreen(image, minSearchTime=0, **kwargs):
@@ -450,10 +441,7 @@ def locateCenterOnScreen(image, **kwargs):
     TODO
     """
     coords = locateOnScreen(image, **kwargs)
-    if coords is None:
-        return None
-    else:
-        return center(coords)
+    return None if coords is None else center(coords)
 
 
 def locateOnWindow(image, title, **kwargs):
@@ -467,12 +455,12 @@ def locateOnWindow(image, title, **kwargs):
 
     matchingWindows = pygetwindow.getWindowsWithTitle(title)
     if len(matchingWindows) == 0:
-        raise PyScreezeException("Could not find a window with %s in the title" % (title))
+        raise PyScreezeException(f"Could not find a window with {title} in the title")
     elif len(matchingWindows) > 1:
         raise PyScreezeException(
-            "Found multiple windows with %s in the title: %s"
-            % (title, [str(win) for win in matchingWindows])
+            f"Found multiple windows with {title} in the title: {[str(win) for win in matchingWindows]}"
         )
+
 
     win = matchingWindows[0]
     win.activate()
@@ -490,12 +478,12 @@ def locateOnClient(image, title, **kwargs):
 
     matchingClients = pygetwindow.getClientsWithTitle(title)
     if len(matchingClients) == 0:
-        raise PyScreezeException("Could not find a window with %s in the title" % (title))
+        raise PyScreezeException(f"Could not find a window with {title} in the title")
     elif len(matchingClients) > 1:
         raise PyScreezeException(
-            "Found multiple windows with %s in the title: %s"
-            % (title, [str(client) for client in matchingClients])
+            f"Found multiple windows with {title} in the title: {[str(client) for client in matchingClients]}"
         )
+
 
     client = matchingClients[0]
     client.activate()
@@ -545,9 +533,8 @@ def _screenshot_osx(imageFilename=None, region=None):
     """
     # TODO - use tmp name for this file.
     if imageFilename is None:
-        tmpFilename = "screenshot%s.png" % (
-            datetime.datetime.now().strftime("%Y-%m%d_%H-%M-%S-%f")
-        )
+        tmpFilename = f'screenshot{datetime.datetime.now().strftime("%Y-%m%d_%H-%M-%S-%f")}.png'
+
     else:
         tmpFilename = imageFilename
     subprocess.call(["screencapture", "-x", tmpFilename])
@@ -577,9 +564,8 @@ def _screenshot_linux(imageFilename=None, region=None):
             '"scrot" must be installed to use screenshot functions in Linux. Run: sudo apt-get install scrot'
         )
     if imageFilename is None:
-        tmpFilename = ".screenshot%s.png" % (
-            datetime.datetime.now().strftime("%Y-%m%d_%H-%M-%S-%f")
-        )
+        tmpFilename = f'.screenshot{datetime.datetime.now().strftime("%Y-%m%d_%H-%M-%S-%f")}.png'
+
     else:
         tmpFilename = imageFilename
     if scrotExists:
@@ -635,12 +621,12 @@ def _steppingFind(needle, haystack, step):
     """
     TODO
     """
-    for startPos in range(0, len(haystack) - len(needle) + 1):
-        foundMatch = True
-        for pos in range(0, len(needle), step):
-            if haystack[startPos + pos] != needle[pos]:
-                foundMatch = False
-                break
+    for startPos in range(len(haystack) - len(needle) + 1):
+        foundMatch = all(
+            haystack[startPos + pos] == needle[pos]
+            for pos in range(0, len(needle), step)
+        )
+
         if foundMatch:
             yield startPos
 
@@ -688,30 +674,28 @@ def pixelMatchesColor(x, y, expectedRGBColor, tolerance=0):
             and (abs(a - exA) <= tolerance)
         )
     else:
-        assert False, (
-            "Color mode was expected to be length 3 (RGB) or 4 (RGBA), but pixel is length %s and expectedRGBColor is length %s"
-            % (len(pix), len(expectedRGBColor))
-        )
+        assert (
+            False
+        ), f"Color mode was expected to be length 3 (RGB) or 4 (RGBA), but pixel is length {len(pix)} and expectedRGBColor is length {len(expectedRGBColor)}"
 
 
 def pixel(x, y):
     """
     TODO
     """
-    if sys.platform == "win32":
-        # On Windows, calling GetDC() and GetPixel() is twice as fast as using our screenshot() function.
-        with __win32_openDC(0) as hdc:  # handle will be released automatically
-            color = windll.gdi32.GetPixel(hdc, x, y)
-            if color < 0:
-                raise WindowsError("windll.gdi32.GetPixel failed : return {}".format(color))
-            # color is in the format 0xbbggrr https://msdn.microsoft.com/en-us/library/windows/desktop/dd183449(v=vs.85).aspx
-            bbggrr = "{:0>6x}".format(color)  # bbggrr => 'bbggrr' (hex)
-            b, g, r = (int(bbggrr[i : i + 2], 16) for i in range(0, 6, 2))
-            return (r, g, b)
-    else:
+    if sys.platform != "win32":
         # Need to select only the first three values of the color in
         # case the returned pixel has an alpha channel
         return RGB(*(screenshot().getpixel((x, y))[:3]))
+        # On Windows, calling GetDC() and GetPixel() is twice as fast as using our screenshot() function.
+    with __win32_openDC(0) as hdc:  # handle will be released automatically
+        color = windll.gdi32.GetPixel(hdc, x, y)
+        if color < 0:
+            raise WindowsError(f"windll.gdi32.GetPixel failed : return {color}")
+        # color is in the format 0xbbggrr https://msdn.microsoft.com/en-us/library/windows/desktop/dd183449(v=vs.85).aspx
+        bbggrr = "{:0>6x}".format(color)  # bbggrr => 'bbggrr' (hex)
+        b, g, r = (int(bbggrr[i : i + 2], 16) for i in range(0, 6, 2))
+        return (r, g, b)
 
 
 # set the screenshot() function based on the platform running this module

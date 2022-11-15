@@ -7,54 +7,60 @@ import pyscreeze
 pyscreeze.RAISE_IF_NOT_FOUND = True
 
 def locateTest():
-    largeNoiseFp = open('largenoise.png' ,'rb')
-    largeNoiseIm = Image.open(largeNoiseFp)
+    with open('largenoise.png' ,'rb') as largeNoiseFp:
+        largeNoiseIm = Image.open(largeNoiseFp)
 
-    imageWidth, imageHeight = largeNoiseIm.size
-    bottomRightCorner100x100 = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
+        imageWidth, imageHeight = largeNoiseIm.size
+        bottomRightCorner100x100 = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
 
-    for step in (1, 2, 4, 8, 16, 32):
-        startTime = time.time()
-        result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, step=step)
-        print('bottomRightCorner100x100 (step %s) located at %s in: %s seconds' % (step, result, round(time.time() - startTime, 2)))
-
-    largeNoiseFp.close()
+        for step in (1, 2, 4, 8, 16, 32):
+            startTime = time.time()
+            result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, step=step)
+            print(
+                f'bottomRightCorner100x100 (step {step}) located at {result} in: {round(time.time() - startTime, 2)} seconds'
+            )
 
 def largegrayscaleTest():
-    largeNoiseFp = open('largenoise.png' ,'rb')
-    largeNoiseIm = Image.open(largeNoiseFp)
+    with open('largenoise.png' ,'rb') as largeNoiseFp:
+        largeNoiseIm = Image.open(largeNoiseFp)
 
-    imageWidth, imageHeight = largeNoiseIm.size
-    bottomRightCorner100x100 = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
+        imageWidth, imageHeight = largeNoiseIm.size
+        bottomRightCorner100x100 = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
 
-    startTime = time.time()
-    result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, grayscale=False)
-    print('Non-grayscale located at %s in: %s seconds' % (result, round(time.time() - startTime, 2)))
+        startTime = time.time()
+        result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, grayscale=False)
+        print(
+            f'Non-grayscale located at {result} in: {round(time.time() - startTime, 2)} seconds'
+        )
 
-    startTime = time.time()
-    result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, grayscale=True)
-    print('Grayscale located at %s in: %s seconds' % (result, round(time.time() - startTime, 2)))
 
-    largeNoiseFp.close()
+        startTime = time.time()
+        result = pyscreeze.locate(bottomRightCorner100x100, largeNoiseIm, grayscale=True)
+        print(
+            f'Grayscale located at {result} in: {round(time.time() - startTime, 2)} seconds'
+        )
 
 
 def smallgrayscaleTest():
-    largeNoiseFp = open('largenoise.png' ,'rb')
-    largeNoiseIm = Image.open(largeNoiseFp)
+    with open('largenoise.png' ,'rb') as largeNoiseFp:
+        largeNoiseIm = Image.open(largeNoiseFp)
 
-    imageWidth, imageHeight = largeNoiseIm.size
-    bottomRightCorner30x30 = largeNoiseIm.crop((imageWidth - 30, imageHeight - 30, imageWidth, imageHeight))
-    largeNoiseIm = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
+        imageWidth, imageHeight = largeNoiseIm.size
+        bottomRightCorner30x30 = largeNoiseIm.crop((imageWidth - 30, imageHeight - 30, imageWidth, imageHeight))
+        largeNoiseIm = largeNoiseIm.crop((imageWidth - 100, imageHeight - 100, imageWidth, imageHeight))
 
-    startTime = time.time()
-    result = pyscreeze.locate(bottomRightCorner30x30, largeNoiseIm, grayscale=False)
-    print('Non-grayscale located at %s in: %s seconds' % (result, round(time.time() - startTime, 2)))
+        startTime = time.time()
+        result = pyscreeze.locate(bottomRightCorner30x30, largeNoiseIm, grayscale=False)
+        print(
+            f'Non-grayscale located at {result} in: {round(time.time() - startTime, 2)} seconds'
+        )
 
-    startTime = time.time()
-    result = pyscreeze.locate(bottomRightCorner30x30, largeNoiseIm, grayscale=True)
-    print('Grayscale located at %s in: %s seconds' % (result, round(time.time() - startTime, 2)))
 
-    largeNoiseFp.close()
+        startTime = time.time()
+        result = pyscreeze.locate(bottomRightCorner30x30, largeNoiseIm, grayscale=True)
+        print(
+            f'Grayscale located at {result} in: {round(time.time() - startTime, 2)} seconds'
+        )
 
 
 def smallNeedleVsLargeNeedle():

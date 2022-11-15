@@ -10,7 +10,8 @@ os.chdir(scriptFolder)
 with open("pyscreeze/__init__.py", "r") as fileObj:
     version = re.search(
         r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fileObj.read(), re.MULTILINE
-    ).group(1)
+    )[1]
+
 
 # Use the README.md content for the long description:
 with io.open("README.md", encoding="utf-8") as fileObj:
